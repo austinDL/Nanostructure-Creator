@@ -1,32 +1,9 @@
 #IMPORTS
 import numpy as np
 from numpy import array, pi, cos, sin, tan
-from numba import typeof, njit, int64, float64, boolean
-from numba.experimental import jitclass
 
+#### Photon Class ####
 
-#### Functions for Numba operations ####
-
-@njit
-def linspace(start,stop,num):
-    return np.linspace(start,stop,num)
-
-@njit
-def dot(ar1,ar2):
-    return ar1[0]*ar2[0] + ar1[1]*ar2[1] + ar1[2]*ar2[2]
-
-#### Functions for Numba operations ####
-
-
-#### Light Ray Class ####
-
-'''spec = [
-    ('pos', float64[:,:]),
-    ('c', float64[:,:]),
-    ('d', float64[:])
-]
-
-@jitclass(spec)'''
 class Ray:
   def __init__(self, maxVal=0.1, arrayNum=36):
     self.init_rayParams(maxVal, arrayNum)
@@ -35,7 +12,7 @@ class Ray:
   def init_rayParams(self, maxVal, arrayNum):
     ### INITIALIZE THE PARAMETERS OF THE RAYS ###
 
-    range_ = linspace(-maxVal,maxVal,arrayNum)
+    range_ = np.linspace(-maxVal,maxVal, num=arrayNum)
 
     self.pos = np.zeros((arrayNum**2, 3))           # Position of Rays
     self.c   = np.zeros((arrayNum**2, 3))           # Photon Velocity Vector
@@ -53,7 +30,7 @@ class Ray:
   def changeC(self,n, ind):
     ### CHANGE THE DIRECTION OF THE LIGHT RAY AFTER REFLECTING OFF OF MIRROR###
     
-    self.c[ind] -= 2*dot(self.c[ind],n) * n
+    self.c[ind] -= 2*np.dot(self.c[ind],n) * n
         
   def move2plane(self,pContact, ind):
     ### MOVE THE LIGHT RAY TO A DESIGNATED PLANE ###
@@ -61,7 +38,7 @@ class Ray:
     pathLen = pContact - self.pos[ind]
     
     #Increase the distance travelled by the light
-    self.d[ind] += (dot(pathLen,pathLen))**0.5
+    self.d[ind] += (np.dot(pathLen,pathLen))**0.5
     
     #Move the light ray to the point of contact on the mirror
     self.pos[ind] = pContact
@@ -78,7 +55,7 @@ class Ray:
     if self.c[ind,1] != 0:
       
       #Find the time taken to get to the diffraction zone
-      t = dot(n,pos - self.pos[ind]) / dot(n,self.c[ind])
+      t = np.dot(n,pos - self.pos[ind]) / np.dot(n,self.c[ind])
 
       #Determine the point of contact
       pContact = self.pos[ind] + self.c[ind]*t
@@ -90,17 +67,11 @@ class Ray:
       #Set the x-z component to infinity, since the Ray doesn't reach the diffraction zone
       self.pos[ind,::2] = np.float(np.inf)
 
-#### Light Ray Class ####
+#### Photon Class ####
     
 
 #### Mirror Class ####
 
-'''spec = [
-  ('pos', float64[:,:]),
-  ('n', float64[:,:])
-]
-
-@jitclass(spec)'''
 class Mirror:
   def __init__(self, maxVal=0.1, arrayNum=36):
     self.init_mirrorParams(maxVal, arrayNum)
@@ -109,7 +80,7 @@ class Mirror:
   def init_mirrorParams(self, maxVal, arrayNum):
   ### SET THE INITIAL CONDITIONS OF THE MIRROR BEFORE AGENT'S INTERACTIONS ###
 
-    range_ = linspace(-maxVal, maxVal, num=arrayNum)
+    range_ = np.linspace(-maxVal, maxVal, num=arrayNum)
 
     self.pos = np.zeros((arrayNum**2, 3))         # Position of Mirrors
     self.n = np.zeros((arrayNum**2, 3))           # Mirror Normal Vector
@@ -152,16 +123,6 @@ class Mirror:
 
 #### Interference Camera Class ####
 
-'''spec = [
-  ('maxVal', float64),
-  ('arrayNum', int64),
-  ('pixelSize', float64),
-  ('img', float64[:,:]),
-  ('ray_pos', float64[:,:]),
-  ('ray_d', float64[:])
-]
-
-@jitclass(spec)'''
 class Interference_Camera:
   def __init__(self, maxVal=0.1, arrayNum=36):
     self.maxVal = maxVal
@@ -254,23 +215,6 @@ class Interference_Camera:
 
 #### RL Environment Class ####
 
-'''spec = [
-  ('maxVal', float64),
-  ('arrayNum', int64),
-  ('ref_IMG', float64[:,:]),
-  ('state', int64[:]),
-  ('Rays', typeof(Ray())),
-  ('Mirrors', typeof(Mirror())),
-  ('used_mirrors', boolean[:]),
-  ('Camera', typeof(Interference_Camera())),
-  ('action_max', float64[:]),
-  ('action_min', float64[:]),
-  ('reward_power', float64),
-  ('old_scale', float64),
-  ('TF', boolean)
-]
-
-@jitclass(spec)'''
 class Environment:
 
   def __init__(self, maxVal=0.1, arrayNum=36, 
